@@ -1,0 +1,15 @@
+#pragma warning(disable:4996)
+#include <stdio.h>
+#include <Windows.h>
+#include <stdlib.h>
+#include <time.h>
+#include <process.h>
+#include <conio.h>
+#include <math.h>
+#include <string.h>
+#include <stdbool.h>
+#define friend_x 16
+#define enemy_x 174
+#define basic_y 12
+#define unit_max 4
+#define block_hp 25
