@@ -1,0 +1,306 @@
+#include "include.h"
+
+INPUT_RECORD rc;
+DWORD        dw;
+COORD pos = { 0,0 };
+KEY_EVENT_RECORD keyEvent;
+
+enum {
+	BLACK,
+	DARK_BLUE,
+	DARK_GREEN,
+	DARK_SKYBLUE,
+	DARK_RED,
+	DARK_VOILET,
+	DAKR_YELLOW,
+	GRAY,
+	DARK_GRAY,
+	BLUE,
+	GREEN,
+	SKYBLUE,
+	RED,
+	VIOLET,
+	YELLOW,
+	WHITE,
+};
+
+// 콘솔 텍스트 색상 변경해주는 함수
+void setColor(unsigned short text) {
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), text);
+}
+
+
+
+
+struct OBJECT
+{
+	short x;
+	short y;
+	bool combat;
+	short hp;
+	bool Is_exist;
+
+};
+
+struct OBJECT Small[unit_max];
+struct OBJECT enemy_Small[unit_max];
+
+
+
+
+int cnt = 0;
+int map[15][96] = {
+		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+		{1,0,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,1},
+		{1,0,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,1},
+		{1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1},
+		{1,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1},
+		{1,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1},
+		{1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1},
+		{1,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1},
+		{1,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1},
+		{1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1},
+		{1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1},
+		{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+		{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+};
+void drawmap() {
+
+
+	for (int i = 0; i < 15; i++) {
+		for (int j = 0; j < 96; j++) {
+			int m = map[i][j];
+			if (j >= 0 && i < 13)
+				setColor(BLUE);
+			if (j >= 89 && i < 13)
+				setColor(RED);
+			if (i == 13)
+				setColor(WHITE);
+			if (m) {
+				printf("■");
+			}
+			if (!m) {
+				printf("  ");
+			}
+		}printf("\n");
+	}
+}
+void gotoxy(int x, int y) { COORD CursorPosition = { x, y }; SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), CursorPosition); }
+
+void CursorView()
+{
+	CONSOLE_CURSOR_INFO cursorInfo = { 0, };
+	cursorInfo.dwSize = 1; //커서 굵기 (1 ~ 100)
+	cursorInfo.bVisible = FALSE; //커서 Visible TRUE(보임) FALSE(숨김)
+	SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursorInfo);
+}
+
+
+void set_all_small()
+{
+	for (int i = 0; i < unit_max; i++)
+	{
+		Small[i].x = friend_x;
+		Small[i].y = basic_y;
+		Small[i].combat = false;
+		Small[i].hp = 100;
+		Small[i].Is_exist = false;
+	}
+}
+void set_all_enemy_small()
+{
+	for (int i = 0; i < unit_max; i++)
+	{
+		enemy_Small[i].x = enemy_x;
+		enemy_Small[i].y = basic_y;
+		enemy_Small[i].combat = false;
+		enemy_Small[i].hp = 100;
+		enemy_Small[i].Is_exist = false;
+	}
+}
+void set_small(short i) {
+	Small[i].x = friend_x;
+	Small[i].y = basic_y;
+	Small[i].combat = false;
+	Small[i].hp = 100;
+	Small[i].Is_exist = false;
+}
+void set_enemy_small(short i) {
+	enemy_Small[i].x = enemy_x;
+	enemy_Small[i].y = basic_y;
+	enemy_Small[i].combat = false;
+	enemy_Small[i].hp = 100;
+	enemy_Small[i].Is_exist = false;
+}
+void summon_small(short i)
+{
+	// 객체 소환 확인
+	if (!(Small[i].Is_exist)) Small[i].Is_exist = true;
+	if (Small[i].hp > block_hp * 2) {
+		gotoxy(Small[i].x, Small[i].y);
+		printf("□");
+	}
+	if (Small[i].hp > block_hp * 3) {
+		gotoxy(Small[i].x, Small[i].y - 1);
+		printf("□");
+	}
+	if (Small[i].hp > block_hp) {
+		gotoxy(Small[i].x - 2, Small[i].y - 1);
+		printf("□");
+	}
+	if (Small[i].hp > 0) {
+		gotoxy(Small[i].x - 2, Small[i].y);
+		printf("□");
+	}
+	else  set_small(i);   //사망시 객체값 초기화
+
+}
+void dlt_small(short i) {
+	gotoxy(Small[i].x - 2, Small[i].y);
+	printf("  ");
+	gotoxy(Small[i].x - 2, Small[i].y - 1);
+	printf("  ");
+	gotoxy(Small[i].x, Small[i].y);
+	printf("  ");
+	gotoxy(Small[i].x, Small[i].y - 1);
+	printf("  ");
+}
+void summon_enemy_small(short i) {
+	if (!(enemy_Small[i].Is_exist)) enemy_Small[i].Is_exist = true;
+	if (enemy_Small[i].hp > block_hp * 2) {
+		gotoxy(enemy_Small[i].x, enemy_Small[i].y);
+		printf("▣");
+	}
+	if (enemy_Small[i].hp > block_hp * 3) {
+		gotoxy(enemy_Small[i].x, enemy_Small[i].y - 1);
+		printf("▣");
+	}
+	if (enemy_Small[i].hp > 0) {
+		gotoxy(enemy_Small[i].x + 2, enemy_Small[i].y);
+		printf("▣");
+	}
+	else set_enemy_small(i);
+	if (enemy_Small[i].hp > block_hp) {
+		gotoxy(enemy_Small[i].x + 2, enemy_Small[i].y - 1);
+		printf("▣");
+	}
+
+}
+void dlt_enemy_small(short i) {
+	gotoxy(enemy_Small[i].x, enemy_Small[i].y);
+	printf("  ");
+	gotoxy(enemy_Small[i].x, enemy_Small[i].y - 1);
+	printf("  ");
+	gotoxy(enemy_Small[i].x + 2, enemy_Small[i].y);
+	printf("  ");
+	gotoxy(enemy_Small[i].x + 2, enemy_Small[i].y - 1);
+	printf("  ");
+}
+
+void _stdcall move_enemy_small(short i) {
+	dlt_enemy_small(i);
+	if (!(enemy_Small[i].combat))  enemy_Small[i].x--;
+	summon_enemy_small(i);
+}
+void _stdcall move_small(short i) {
+	dlt_small(i);
+	if (!(Small[i].combat))  Small[i].x++;
+	summon_small(i);
+}
+
+unsigned _stdcall enemy_small_atk(void* index) 
+{
+	int i = *(int*)index;
+	while (enemy_Small[i].combat)
+	{
+		
+		Small[i].hp--;
+		gotoxy(Small[i].x - 2, Small[i].y - 2);
+		printf("%2d", (block_hp * 4 - Small[i].hp) % 25);
+		
+		Sleep(25);
+	
+	}
+	
+	return 0;
+}
+
+unsigned _stdcall small_atk(void* index) {
+	int i = *(int*)index;
+	
+	while (Small[i].combat) {
+		
+		// space 누를때 공격
+		ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &rc, 1, &dw); //핸들정보       
+		keyEvent = rc.Event.KeyEvent;
+		if (keyEvent.bKeyDown) {}
+		else if (keyEvent.wVirtualKeyCode == VK_SPACE)
+			enemy_Small[i].hp--;
+		//데미지 출력
+		gotoxy(enemy_Small[i].x + 1, enemy_Small[i].y - 2);
+		printf("%2d", (block_hp * 4 - enemy_Small[i].hp) % 25);
+		Sleep(1);
+		
+	}
+	return 0;
+}
+int main() {
+	system("title siege machine");
+	system("mode con cols=200 lines=30");
+	SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), ENABLE_PROCESSED_INPUT | ENABLE_MOUSE_INPUT);
+	CursorView();
+	drawmap();
+	
+	set_all_small();
+	set_all_enemy_small();
+	int i = 0;
+	char input;
+	int cnt = 0;
+	int death_count = 0;
+	while (1) {
+		if (!(death_count))
+			move_small(i);
+		//if (!(death_count))
+		move_enemy_small(i);
+		//전투상태 확인
+		if (Small[i].x + 1 == enemy_Small[i].x - 1 || Small[i].x + 3 == enemy_Small[i].x )
+		{
+			Small[i].combat = true;
+			enemy_Small[i].combat = true;
+			cnt++;
+		}
+		//공격 허용
+		if ((Small[i].combat || enemy_Small[i].combat) && (cnt == 1)) {
+			_beginthreadex(NULL, 0, small_atk, &i, 0, NULL);
+			_beginthreadex(NULL, 0, enemy_small_atk, &i, 0, NULL);	
+		}
+		//객체 사망 확인
+		if (enemy_Small[i].hp <= 1)
+		{
+			Small[i].combat = false; 
+			set_enemy_small(i); 
+			system("cls"); 
+			drawmap();
+			cnt = 0;
+			death_count = 30;
+		}
+		if (Small[i].hp <= 1)
+		{
+			enemy_Small[i].combat = false;
+			set_small(i);
+			system("cls");
+			drawmap();
+			cnt = 0;
+			death_count = 30;
+		}
+		if (death_count > 0)
+			death_count--;
+		Sleep(20);
+		if (Small[i].x == enemy_x || enemy_Small[i].x == friend_x) {
+			gotoxy(20, 20);
+			exit(0);
+		}
+	}
+}
